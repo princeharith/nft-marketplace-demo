@@ -1,27 +1,36 @@
 /* pages/index.js */
 import { ethers } from 'ethers'
+//hooks, to invole a function when component loads, to keep up with local states respectively
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+//allows us to connect to someones ethereum wallet
 import Web3Modal from "web3modal"
 
+//ref to addresses
 import {
   nftaddress, nftmarketaddress
 } from '../config'
 
+//ABIs are JSON representation of our smart contracts
 import NFT from '../artifacts/contracts/NFT.sol/NFT.json'
 import Market from '../artifacts/contracts/Market.sol/NFTMarket.json'
 
 export default function Home() {
   const [nfts, setNfts] = useState([])
   const [loadingState, setLoadingState] = useState('not-loaded')
+
+  //loadNFTs gets invoked
   useEffect(() => {
     loadNFTs()
   }, [])
+
+  //where we call our smart contracts
   async function loadNFTs() {
     /* create a generic provider and query for unsold market items */
-    const provider = new ethers.providers.JsonRpcProvider()
+    const provider = new ethers.providers.JsonRpcProvider("https://matic-mumbai.chainstacklabs.com")
     const tokenContract = new ethers.Contract(nftaddress, NFT.abi, provider)
     const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, provider)
+    //returning the array of marketItems
     const data = await marketContract.fetchMarketItems()
 
     /*
@@ -30,7 +39,9 @@ export default function Home() {
     */
     const items = await Promise.all(data.map(async i => {
       const tokenUri = await tokenContract.tokenURI(i.tokenId)
+      //getting the metadata
       const meta = await axios.get(tokenUri)
+      //to format the price properly
       let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
       let item = {
         price,
@@ -50,6 +61,8 @@ export default function Home() {
     /* needs the user to sign the transaction, so will use Web3Provider and sign it */
     const web3Modal = new Web3Modal()
     const connection = await web3Modal.connect()
+
+    
     const provider = new ethers.providers.Web3Provider(connection)
     const signer = provider.getSigner()
     const contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
@@ -61,7 +74,7 @@ export default function Home() {
     })
     await transaction.wait()
     loadNFTs()
-  }
+  }  
   if (loadingState === 'loaded' && !nfts.length) return (<h1 className="px-20 py-10 text-3xl">No items in marketplace</h1>)
   return (
     <div className="flex justify-center">
