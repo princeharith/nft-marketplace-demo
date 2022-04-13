@@ -13,6 +13,8 @@ contract NFTMarket is ReentrancyGuard {
     Counters.Counter private _itemIds;
     Counters.Counter private _itemsSold;
 
+    //address public tokenaddress = 0x3af79615eB0CDC43FFDe9b79d5D7BEcF0667Fd74;
+
     //owner makes commission for every txn
     address payable owner;
     uint256 listingPrice = 0.025 ether;
@@ -53,15 +55,22 @@ contract NFTMarket is ReentrancyGuard {
     }
 
     //function for creating a market item, pass in the contract, it's ID, and listing price
-    function createMarketItem( address nftContract, uint256 tokenId, uint256 price) public payable nonReentrant {
+    function createMarketItem(
+        address nftContract,
+        uint256 tokenId,
+        uint256 price
+    ) public payable nonReentrant {
         require(price > 0, "Price must be at least 1 wei");
-        require( msg.value == listingPrice, "Price must be equal to listing price");
+        require(
+            msg.value == listingPrice,
+            "Price must be equal to listing price"
+        );
 
         //increment the itemIds counter
         _itemIds.increment();
         //set the current item ID
         uint256 itemId = _itemIds.current();
-        
+
         //POPULATE the market item that corresponds to an item ID
         idToMarketItem[itemId] = MarketItem(
             itemId,
@@ -74,7 +83,7 @@ contract NFTMarket is ReentrancyGuard {
             false
         );
 
-        //transfers the nft contract to this contract
+        //transfers the nft contract to this contract, contract will take ownership (address(this))
         IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId);
 
         emit MarketItemCreated(
@@ -88,7 +97,11 @@ contract NFTMarket is ReentrancyGuard {
         );
     }
 
-    function createMarketSale(address nftContract, uint256 itemId) public payable nonReentrant {
+    function createMarketSale(address nftContract, uint256 itemId)
+        public
+        payable
+        nonReentrant
+    {
         uint256 price = idToMarketItem[itemId].price;
         uint256 tokenId = idToMarketItem[itemId].tokenId;
 
@@ -184,3 +197,6 @@ contract NFTMarket is ReentrancyGuard {
         return items;
     }
 }
+
+//0x3af79615eb0cdc43ffde9b79d5d7becf0667fd74
+//0x3af79615eB0CDC43FFDe9b79d5D7BEcF0667Fd74

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ethers } from 'ethers'
 import { create as ipfsHttpClient } from 'ipfs-http-client'
 import { useRouter } from 'next/router'
+import Web3 from 'web3'
 import Web3Modal from 'web3modal'
 
 const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
@@ -14,12 +15,21 @@ import {
 import NFT from '../artifacts/contracts/NFT.sol/NFT.json'
 import Market from '../artifacts/contracts/Market.sol/NFTMarket.json'
 
+
 export default function CreateItem() {
+
+
+
+
   const [fileUrl, setFileUrl] = useState(null)
   const [formInput, updateFormInput] = useState({ price: '', name: '', description: '' })
   const router = useRouter()
 
+  getMetaMaskInfo()
+
   async function onChange(e) {
+
+
     const file = e.target.files[0]
     try {
       const added = await client.add(
@@ -34,7 +44,28 @@ export default function CreateItem() {
       console.log('Error uploading file: ', error)
     }  
   }
+
+
+  async function getMetaMaskInfo() {
+    web3 = new Web3(window.ethereum)
+    var accounts = await web3.eth.getAccounts();
+
+    return accounts[0]
+  }
+
+
   async function createMarket() {
+
+    const owner_wallet = "0xf1E334489CCDB2359E446e3B0D8F0b2E86Dcf2F7"
+    
+    if (await getMetaMaskInfo() != owner_wallet) {
+      console.log(await getMetaMaskInfo())
+      console.log("Error")
+      return
+    }
+
+
+    
     const { name, description, price } = formInput
     if (!name || !description || !price || !fileUrl) return
     /* first, upload to IPFS */
@@ -56,6 +87,8 @@ export default function CreateItem() {
     const connection = await web3Modal.connect()
     const provider = new ethers.providers.Web3Provider(connection)    
     const signer = provider.getSigner()
+
+
 
     /* next, create the item */
     let contract = new ethers.Contract(nftaddress, NFT.abi, signer)

@@ -11,6 +11,7 @@ contract NFT is ERC721URIStorage {
     using Counters for Counters.Counter;
     //to keep track/increment token IDs
     Counters.Counter private _tokenIds;
+    //address public tokenaddress = 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9;
 
     //the address of the marketplace where the NFT will be interacting with
     address contractAddress;
